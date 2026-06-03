@@ -243,7 +243,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "httpx", specifier = ">=0.27" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.2.0" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.27.2" },
     { name = "pydantic", specifier = ">=2.6" },
     { name = "pydantic-settings", specifier = ">=2.2" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=5" },
@@ -252,7 +252,7 @@ provides-extras = ["redis"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "fakeredis", extras = ["lua"], specifier = ">=2.21" },
+    { name = "fakeredis", extras = ["lua"], specifier = ">=2.36.0" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-asyncio", specifier = ">=0.23" },
     { name = "pytest-cov", specifier = ">=5" },
