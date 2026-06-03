@@ -9,10 +9,11 @@ from crossref_mcp.errors import CrossrefError
 from crossref_mcp.models import list_response, simplify_member, simplify_work
 from crossref_mcp.normalize import normalize_id
 from crossref_mcp.query import build_search_params
+from crossref_mcp.tools import READ_ONLY
 
 
 def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def search_members(
         query: str | None = None,
         filter: str | None = None,
@@ -31,7 +32,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return data if raw else list_response(data.get("message", {}), simplify_member)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_member(member_id: int | str, raw: bool = False) -> dict:
         """Fetch one member (publisher) by numeric Crossref member id."""
         try:
@@ -40,7 +41,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return message if raw else simplify_member(message)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_member_works(
         member_id: int | str,
         query: str | None = None,

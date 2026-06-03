@@ -8,13 +8,14 @@ from crossref_mcp.client import CrossrefClient
 from crossref_mcp.errors import CrossrefError
 from crossref_mcp.models import list_response, simplify_work
 from crossref_mcp.query import build_search_params
+from crossref_mcp.tools import READ_ONLY
 
 # Hard cap on references returned by get_work_references (PLAN decision 8).
 REFERENCES_CAP = 50
 
 
 def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def search_works(
         query: str | None = None,
         query_bibliographic: str | None = None,
@@ -59,7 +60,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return data
         return list_response(data.get("message", {}), simplify_work)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_work(doi: str, raw: bool = False) -> dict:
         """Fetch a single work's metadata by DOI.
 
@@ -72,7 +73,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return message if raw else simplify_work(message)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_work_references(doi: str, limit: int = REFERENCES_CAP, raw: bool = False) -> dict:
         """List the reference list of a work (the works it cites), by DOI.
 
@@ -92,7 +93,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             "references": sliced,
         }
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_work_quality(doi: str, raw: bool = False) -> dict:
         """Look up the registration agency for a DOI (Crossref, DataCite, ...)."""
         try:

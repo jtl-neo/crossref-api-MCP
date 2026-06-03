@@ -9,6 +9,7 @@ from crossref_mcp.errors import CrossrefError
 from crossref_mcp.models import list_response, simplify_prefix, simplify_type
 from crossref_mcp.normalize import normalize_id
 from crossref_mcp.query import build_search_params
+from crossref_mcp.tools import READ_ONLY
 
 
 def _simplify_license(m: dict) -> dict:
@@ -16,7 +17,7 @@ def _simplify_license(m: dict) -> dict:
 
 
 def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def list_types(rows: int = 100, offset: int = 0, raw: bool = False) -> dict:
         """List Crossref work types (journal-article, book-chapter, ...)."""
         params = build_search_params(rows=rows, offset=offset)
@@ -26,7 +27,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return data if raw else list_response(data.get("message", {}), simplify_type)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_type(type_id: str, raw: bool = False) -> dict:
         """Fetch one work type by id (e.g. "journal-article")."""
         try:
@@ -35,7 +36,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return message if raw else simplify_type(message)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def list_licenses(
         query: str | None = None,
         rows: int = 20,
@@ -50,7 +51,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return data if raw else list_response(data.get("message", {}), _simplify_license)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_prefix(owner_prefix: str, raw: bool = False) -> dict:
         """Look up the owner of a DOI prefix (e.g. "10.1038").
 

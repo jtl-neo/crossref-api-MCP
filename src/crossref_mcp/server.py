@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -14,7 +15,16 @@ from crossref_mcp.tools import funders, journals, members, misc, works
 
 log = get_logger("server")
 
-mcp = FastMCP("crossref-mcp")
+INSTRUCTIONS = (
+    "Query scholarly metadata from the Crossref REST API: works (articles, books, "
+    "datasets), members (publishers), journals, funders, types, licenses, and DOI "
+    "prefixes. All tools are read-only. Use search_* / get_*_works to find works and "
+    "get_work for a DOI. Tools return simplified fields by default; pass raw=true for "
+    "the full Crossref JSON. For large result sets, page with cursor='*' then reuse the "
+    "returned next_cursor. Set CROSSREF_MAILTO to join Crossref's polite pool."
+)
+
+mcp = FastMCP("crossref-mcp", instructions=INSTRUCTIONS)
 
 # Module-level client singleton, created lazily and shared across tool calls.
 _client: CrossrefClient | None = None
@@ -27,7 +37,7 @@ def get_client() -> CrossrefClient:
     return _client
 
 
-@mcp.tool()
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
 def ping() -> str:
     """Health check tool: returns the server name and version."""
     return f"pong from crossref-mcp {__version__}"

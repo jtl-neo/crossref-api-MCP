@@ -54,3 +54,7 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "live: hits the real Crossref API (deselected by default; needs CROSSREF_LIVE=1)",
+]
+addopts = "-m 'not live'"

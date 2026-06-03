@@ -9,10 +9,11 @@ from crossref_mcp.errors import CrossrefError
 from crossref_mcp.models import list_response, simplify_journal, simplify_work
 from crossref_mcp.normalize import normalize_issn
 from crossref_mcp.query import build_search_params
+from crossref_mcp.tools import READ_ONLY
 
 
 def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def search_journals(
         query: str | None = None,
         rows: int = 20,
@@ -28,7 +29,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return data if raw else list_response(data.get("message", {}), simplify_journal)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_journal(issn: str, raw: bool = False) -> dict:
         """Fetch one journal by ISSN (NNNN-NNNN; hyphen optional)."""
         try:
@@ -41,7 +42,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return message if raw else simplify_journal(message)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_journal_works(
         issn: str,
         query: str | None = None,

@@ -9,10 +9,11 @@ from crossref_mcp.errors import CrossrefError
 from crossref_mcp.models import list_response, simplify_funder, simplify_work
 from crossref_mcp.normalize import normalize_id
 from crossref_mcp.query import build_search_params
+from crossref_mcp.tools import READ_ONLY
 
 
 def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def search_funders(
         query: str | None = None,
         rows: int = 20,
@@ -28,7 +29,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return data if raw else list_response(data.get("message", {}), simplify_funder)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_funder(funder_id: str, raw: bool = False) -> dict:
         """Fetch one funder by its Crossref Funder Registry id (e.g. 100000001)."""
         try:
@@ -37,7 +38,7 @@ def register(mcp, get_client: Callable[[], CrossrefClient]) -> None:
             return {"error": exc.to_dict()}
         return message if raw else simplify_funder(message)
 
-    @mcp.tool()
+    @mcp.tool(annotations=READ_ONLY)
     async def get_funder_works(
         funder_id: str,
         query: str | None = None,
