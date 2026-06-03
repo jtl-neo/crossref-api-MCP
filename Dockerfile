@@ -23,9 +23,9 @@ FROM python:3.12-slim AS runtime
 
 LABEL org.opencontainers.image.title="crossref-mcp" \
       org.opencontainers.image.description="MCP server wrapping the Crossref REST API" \
-      org.opencontainers.image.source="https://github.com/heyinnaneo/crossref-mcp" \
+      org.opencontainers.image.source="https://github.com/jtl-neo/crossref-api-MCP" \
       org.opencontainers.image.licenses="MIT" \
-      io.modelcontextprotocol.server.name="io.github.heyinnaneo/crossref-mcp"
+      io.modelcontextprotocol.server.name="io.github.jtl-neo/crossref-mcp"
 
 RUN useradd --create-home --uid 1000 app
 WORKDIR /app

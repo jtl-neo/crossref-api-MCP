@@ -27,4 +27,4 @@ adheres to [Semantic Versioning](https://semver.org/).
 - CI: lint + format + test (with coverage); multi-arch build/push to Docker Hub
   on `main` / version tags, gated by a version-consistency check.
 
-[Unreleased]: https://github.com/heyinnaneo/crossref-mcp/commits/main
+[Unreleased]: https://github.com/jtl-neo/crossref-api-MCP/commits/main

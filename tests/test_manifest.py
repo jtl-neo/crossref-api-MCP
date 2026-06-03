@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
-SERVER_NAME = "io.github.heyinnaneo/crossref-mcp"
+SERVER_NAME = "io.github.jtl-neo/crossref-mcp"
 
 
 @pytest.fixture(scope="module")
