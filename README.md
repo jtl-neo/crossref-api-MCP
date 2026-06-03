@@ -163,6 +163,27 @@ To enable publishing, add two repository secrets under
 Push a tag (`git tag v0.1.0 && git push origin v0.1.0`) to publish a versioned
 image; the version must match `pyproject.toml`.
 
+## Install from the MCP registry
+
+Published as `io.github.heyinnaneo/crossref-mcp` (see [`server.json`](./server.json)),
+with a PyPI package (`uvx crossref-mcp`) and an OCI image. Publishing is automated
+on version tags by the `publish-pypi` and `publish-registry` CI jobs; both require
+the GitHub repo to be public and a PyPI Trusted Publisher to be configured. The
+`mcp-name` marker in this README and the `io.modelcontextprotocol.server.name`
+image label are the registry ownership proofs.
+
+## Security & trust
+
+- **Read-only.** Every tool is a Crossref lookup and is annotated `readOnlyHint`;
+  the server cannot modify anything.
+- **Rate limiting.** Defaults to a single-process in-memory limiter against the
+  upstream Crossref API. Do not run this as a public proxy for heavy traffic; for
+  multiple replicas enable the shared Redis limiter (`RATELIMIT_BACKEND=redis`).
+- **Polite pool.** Set your own `CROSSREF_MAILTO`; don't reuse someone else's.
+- **Public HTTP.** When exposed, set `MCP_API_KEY` and front it with TLS (see
+  *Public deployment*).
+- **No bundled secrets.** `.env` is excluded from the image and from git.
+
 ## License
 
 [MIT](./LICENSE). Bibliographic data comes from the public
