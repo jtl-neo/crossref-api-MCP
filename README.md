@@ -53,6 +53,20 @@ uv run mcp dev src/crossref_mcp/server.py
 All query tools return simplified fields by default; pass `raw=true` for the full
 Crossref JSON.
 
+## Docker / HTTP deployment
+
+```bash
+cp .env.example .env          # then set CROSSREF_MAILTO
+docker compose up -d          # pulls heyinnaneo/crossref-mcp, serves HTTP on :8000
+curl http://localhost:8000/health
+```
+
+The container serves the Streamable HTTP transport at `http://localhost:8000/mcp`
+and a `/health` liveness endpoint (used by the compose health check). Set
+`MCP_API_KEY` in `.env` to require an `X-API-Key` header on `/mcp` (`/health`
+stays open). To build from local source instead of pulling, uncomment `build: .`
+in `docker-compose.yml`.
+
 ## License
 
 [MIT](./LICENSE).

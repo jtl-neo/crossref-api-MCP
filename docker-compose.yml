@@ -1,0 +1,22 @@
+services:
+  crossref-mcp:
+    image: heyinnaneo/crossref-mcp:latest
+    # For local development against your own code, comment out `image:` above
+    # and uncomment the next line to build from source:
+    # build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - MCP_TRANSPORT=http
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/health')
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped

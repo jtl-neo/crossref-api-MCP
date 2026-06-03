@@ -1,0 +1,21 @@
+.git
+.github
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+tests
+dist
+build
+htmlcov
+.coverage
+coverage.xml
+# secrets must never enter the image
+.env
+.env.local
+# docs not needed at runtime (README.md is kept — pyproject readme references it)
+PLAN.md
+Roadmap.md
+.DS_Store
