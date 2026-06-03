@@ -35,7 +35,12 @@ def test_manifest_version_matches_pyproject(manifest, pyproject):
     version = pyproject["project"]["version"]
     assert manifest["version"] == version
     for pkg in manifest["packages"]:
-        assert pkg["version"] == version, pkg["registryType"]
+        if pkg["registryType"] == "oci":
+            # OCI: no `version` field; version lives in the identifier tag.
+            assert "version" not in pkg
+            assert pkg["identifier"].endswith(f":{version}")
+        else:
+            assert pkg["version"] == version, pkg["registryType"]
 
 
 def test_pypi_and_oci_packages_present(manifest):
