@@ -1,0 +1,57 @@
+# Caddy reverse proxy for public deployment of crossref-mcp.
+# TLS termination + automatic Let's Encrypt + HTTP->HTTPS + SSE-aware proxy.
+# Used by docker-compose.proxy.yml. See README "Public deployment".
+{
+	email {$ACME_EMAIL}
+	# For testing, point ACME at Let's Encrypt staging to avoid rate limits:
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	# Security headers (HSTS etc). These are response headers; they do not
+	# interfere with the /mcp SSE body.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+
+	# Liveness probe — always open, no auth (so health checks/probes work).
+	handle /health {
+		reverse_proxy crossref-mcp:8000
+	}
+
+	# MCP Streamable HTTP endpoint.
+	handle /mcp* {
+		# --- Optional IP allowlist: uncomment and set your CIDRs ---
+		# @blocked not remote_ip 203.0.113.0/24 10.0.0.0/8
+		# respond @blocked 403
+
+		# --- Optional Basic auth: generate a hash with
+		#     `docker run --rm caddy caddy hash-password --plaintext 'secret'`
+		# basic_auth {
+		# 	{$PROXY_BASIC_AUTH_USER} {$PROXY_BASIC_AUTH_HASH}
+		# }
+
+		# --- Optional rate limiting requires the caddy-ratelimit plugin
+		#     (build a custom image: `xcaddy build --with github.com/mholt/caddy-ratelimit`).
+		#     Then uncomment:
+		# rate_limit {
+		# 	zone mcp { key {remote_host} events 60 window 1m }
+		# }
+
+		reverse_proxy crossref-mcp:8000 {
+			# Stream Server-Sent Events immediately; never buffer the response.
+			flush_interval -1
+		}
+	}
+
+	# Anything else: 404.
+	handle {
+		respond "Not found" 404
+	}
+}

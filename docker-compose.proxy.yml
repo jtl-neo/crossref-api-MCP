@@ -1,0 +1,54 @@
+# Public deployment: Caddy (TLS) in front of crossref-mcp.
+# The backend is NOT published on the host — only Caddy's 80/443 are exposed.
+#
+#   cp .env.example .env        # set CROSSREF_MAILTO, MCP_API_KEY, DOMAIN, ACME_EMAIL
+#   docker compose -f docker-compose.proxy.yml up -d
+#
+# For purely local use, prefer the plain docker-compose.yml instead.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # persists ACME certs/account — do not delete
+      - caddy_config:/config
+    environment:
+      - DOMAIN=${DOMAIN:?set DOMAIN in .env}
+      - ACME_EMAIL=${ACME_EMAIL:?set ACME_EMAIL in .env}
+      - PROXY_BASIC_AUTH_USER=${PROXY_BASIC_AUTH_USER:-}
+      - PROXY_BASIC_AUTH_HASH=${PROXY_BASIC_AUTH_HASH:-}
+    depends_on:
+      - crossref-mcp
+    restart: unless-stopped
+    networks: [edge]
+
+  crossref-mcp:
+    image: heyinnaneo/crossref-mcp:latest
+    expose:
+      - "8000"                 # internal only — reachable by caddy, not the host
+    env_file: .env
+    environment:
+      - MCP_TRANSPORT=http
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/health')
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks: [edge]
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  edge:

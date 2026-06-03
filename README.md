@@ -105,6 +105,28 @@ and a `/health` liveness endpoint (used by the compose health check). Set
 stays open). To build from local source instead of pulling, uncomment `build: .`
 in `docker-compose.yml`.
 
+## Public deployment (TLS / reverse proxy) — optional
+
+To expose the server publicly over HTTPS, put it behind the bundled Caddy proxy
+(`Caddyfile` + `docker-compose.proxy.yml`). Caddy terminates TLS (auto Let's
+Encrypt), redirects HTTP→HTTPS, streams SSE correctly (`flush_interval -1`), and
+the backend is no longer published on the host — only Caddy's 80/443.
+
+```bash
+cp .env.example .env
+# add to .env:  DOMAIN=mcp.example.com   ACME_EMAIL=you@example.com
+#               MCP_API_KEY=...           (strongly recommended when public)
+docker compose -f docker-compose.proxy.yml up -d
+curl https://mcp.example.com/health
+```
+
+Defense in depth: the proxy is the edge (optional IP allowlist / Basic auth in
+`Caddyfile`), `MCP_API_KEY` is the app layer (Caddy forwards `X-API-Key`); both
+leave `/health` open. Requires a domain with DNS pointing at the host and ports
+80/443 reachable. Caddy rate limiting needs the `caddy-ratelimit` plugin (custom
+build) — see the commented block in `Caddyfile`. Multi-replica scaling needs the
+shared rate-limit backend from M9 (see Roadmap).
+
 ## CI / publishing
 
 `.github/workflows/ci.yml` runs two jobs:
