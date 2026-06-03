@@ -99,6 +99,21 @@ class CrossrefClient:
         data = await self._get(f"/works/{normalize_doi(doi)}/agency")
         return data.get("message", data)
 
+    # --- generic resource endpoints (M3) --------------------------------
+
+    async def get_resource_list(self, resource: str, params: dict[str, Any]) -> dict:
+        """GET /{resource} — returns the full envelope (has message.items)."""
+        return await self._get(f"/{resource}", params)
+
+    async def get_resource(self, resource: str, ident: str) -> dict:
+        """GET /{resource}/{id} — returns the inner message."""
+        data = await self._get(f"/{resource}/{ident}")
+        return data.get("message", data)
+
+    async def get_resource_works(self, resource: str, ident: str, params: dict[str, Any]) -> dict:
+        """GET /{resource}/{id}/works — returns the full envelope."""
+        return await self._get(f"/{resource}/{ident}/works", params)
+
     # --- lifecycle -------------------------------------------------------
 
     async def aclose(self) -> None:

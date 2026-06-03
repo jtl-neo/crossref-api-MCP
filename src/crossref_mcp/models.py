@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 
@@ -48,3 +49,55 @@ def simplify_work(message: dict) -> dict:
 
 def simplify_work_list(items: list[dict]) -> list[dict]:
     return [simplify_work(item) for item in (items or []) if isinstance(item, dict)]
+
+
+# --- resource (member / journal / funder / type / prefix) simplifiers ----
+
+
+def simplify_member(m: dict) -> dict:
+    return {
+        "id": m.get("id"),
+        "primary_name": m.get("primary-name"),
+        "location": m.get("location"),
+        "total_dois": (m.get("counts") or {}).get("total-dois"),
+    }
+
+
+def simplify_journal(m: dict) -> dict:
+    return {
+        "title": m.get("title"),
+        "issn": m.get("ISSN") or [],
+        "publisher": m.get("publisher"),
+    }
+
+
+def simplify_funder(m: dict) -> dict:
+    return {
+        "id": m.get("id"),
+        "name": m.get("name"),
+        "location": m.get("location"),
+        "uri": m.get("uri"),
+    }
+
+
+def simplify_type(m: dict) -> dict:
+    return {"id": m.get("id"), "label": m.get("label")}
+
+
+def simplify_prefix(m: dict) -> dict:
+    return {"prefix": m.get("prefix"), "name": m.get("name"), "member": m.get("member")}
+
+
+def list_response(message: dict, simplifier: Callable[[dict], dict]) -> dict:
+    """Wrap a Crossref list 'message' into a compact paged response.
+
+    Carries `next_cursor` (from `next-cursor`) so deep paging can continue by
+    passing it back as the `cursor` argument.
+    """
+    items = message.get("items", []) or []
+    return {
+        "total_results": message.get("total-results"),
+        "next_cursor": message.get("next-cursor"),
+        "items_count": len(items),
+        "items": [simplifier(i) for i in items if isinstance(i, dict)],
+    }

@@ -8,7 +8,7 @@ from crossref_mcp import __version__
 from crossref_mcp.client import CrossrefClient
 from crossref_mcp.config import get_settings
 from crossref_mcp.log import get_logger
-from crossref_mcp.tools import works
+from crossref_mcp.tools import funders, journals, members, misc, works
 
 log = get_logger("server")
 
@@ -33,6 +33,10 @@ def ping() -> str:
 
 # Register resource tools.
 works.register(mcp, get_client)
+members.register(mcp, get_client)
+journals.register(mcp, get_client)
+funders.register(mcp, get_client)
+misc.register(mcp, get_client)
 
 
 def main() -> None:
