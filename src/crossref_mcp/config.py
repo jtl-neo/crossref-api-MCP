@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     # Transport: "stdio" or "http". Defaults to stdio for local dev (M5 flips to http).
     mcp_transport: str = Field(default="stdio", validation_alias="MCP_TRANSPORT")
 
+    # Optional HTTP auth. When set, HTTP requests must carry a matching X-API-Key
+    # header (timing-safe compare); /health is always exempt. Unset = no auth.
+    mcp_api_key: str | None = Field(default=None, validation_alias="MCP_API_KEY")
+
 
 @lru_cache
 def get_settings() -> Settings:

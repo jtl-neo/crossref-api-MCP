@@ -6,9 +6,10 @@ import httpx
 import pytest
 import respx
 
+import crossref_mcp.client as client_mod
 from crossref_mcp.client import CrossrefClient
 from crossref_mcp.config import Settings
-from crossref_mcp.errors import NotFoundError, UpstreamError
+from crossref_mcp.errors import NotFoundError, RateLimitError, UpstreamError
 
 from .conftest import BASE_URL
 
@@ -69,6 +70,37 @@ async def test_retry_on_500_then_success(client: CrossrefClient):
     data = await client.search_works({})
     assert data == {"message": {"items": []}}
     assert route.call_count == 2
+
+
+@respx.mock
+async def test_429_honors_retry_after_then_succeeds(client: CrossrefClient, monkeypatch):
+    sleeps: list[float] = []
+
+    async def fake_sleep(s: float):
+        sleeps.append(s)
+
+    monkeypatch.setattr(client_mod.asyncio, "sleep", fake_sleep)
+    route = respx.get(f"{BASE_URL}/works").mock(
+        side_effect=[
+            httpx.Response(429, headers={"Retry-After": "2"}, text="slow down"),
+            httpx.Response(200, json={"message": {"items": []}}),
+        ]
+    )
+    data = await client.search_works({})
+    assert data == {"message": {"items": []}}
+    assert route.call_count == 2
+    assert sleeps[0] == 2.0  # Retry-After honored over default backoff
+
+
+@respx.mock
+async def test_429_exhausted_raises_rate_limit(client: CrossrefClient, monkeypatch):
+    async def fake_sleep(_s: float):
+        return None
+
+    monkeypatch.setattr(client_mod.asyncio, "sleep", fake_sleep)
+    respx.get(f"{BASE_URL}/works").mock(return_value=httpx.Response(429, text="nope"))
+    with pytest.raises(RateLimitError):
+        await client.search_works({})
 
 
 @respx.mock

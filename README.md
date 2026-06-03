@@ -39,6 +39,7 @@ uv run mcp dev src/crossref_mcp/server.py
 | `CROSSREF_BASE_URL` | no | `https://api.crossref.org` | API base URL. |
 | `CROSSREF_TIMEOUT` | no | `30` | Per-request timeout (seconds). |
 | `MCP_TRANSPORT` | no | `stdio` | `stdio` or `http`. |
+| `MCP_API_KEY` | no | — | If set, HTTP requests need a matching `X-API-Key` header (`/health` exempt). |
 | `LOG_LEVEL` | no | `INFO` | Log level (logs go to stderr). |
 
 ## Tools (current)
