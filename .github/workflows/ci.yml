@@ -103,6 +103,8 @@ jobs:
         run: uv build
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true  # safe to re-run; never fails on an already-uploaded version
 
   # Register the release with the official MCP registry.
   publish-registry:
@@ -121,4 +123,15 @@ jobs:
       - name: Login (GitHub OIDC)
         run: mcp-publisher login github-oidc
       - name: Publish
-        run: mcp-publisher publish
+        # Retry: the registry validates the PyPI package, which can lag a minute
+        # behind a fresh upload (publish-pypi runs just before this job).
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if mcp-publisher publish; then
+              echo "published on attempt $attempt"; exit 0
+            fi
+            echo "publish attempt $attempt failed; retrying in 30s..."
+            sleep 30
+          done
+          echo "::error::mcp-publisher publish failed after 5 attempts"
+          exit 1
