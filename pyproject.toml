@@ -20,6 +20,10 @@ dependencies = [
     "pydantic-settings>=2.2",
 ]
 
+[project.optional-dependencies]
+# Optional: Redis-backed response cache + cross-replica rate limiting (M9).
+redis = ["redis>=5"]
+
 [project.urls]
 Homepage = "https://github.com/heyinnaneo/crossref-mcp"
 Repository = "https://github.com/heyinnaneo/crossref-mcp"
@@ -34,6 +38,8 @@ dev = [
     "pytest-asyncio>=0.23",
     "respx>=0.21",
     "pytest-cov>=5",
+    "redis>=5",
+    "fakeredis[lua]>=2.21",
 ]
 
 [build-system]

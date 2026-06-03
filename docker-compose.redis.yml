@@ -1,0 +1,50 @@
+# Optional: crossref-mcp + Redis (response cache + cross-replica rate limiting).
+#
+#   cp .env.example .env        # set CROSSREF_MAILTO
+#   docker compose -f docker-compose.redis.yml up -d
+#
+# Multi-replica: `docker compose -f docker-compose.redis.yml up -d --scale
+# crossref-mcp=3` — but then drop the host port mapping and front it with the
+# Caddy proxy (docker-compose.proxy.yml); the shared Redis bucket keeps all
+# replicas within Crossref's polite-pool rate.
+
+services:
+  redis:
+    image: redis:7-alpine
+    # Cap memory and evict oldest cache entries; rate-limit keys are tiny.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  crossref-mcp:
+    image: heyinnaneo/crossref-mcp:latest
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - MCP_TRANSPORT=http
+      - REDIS_URL=redis://redis:6379/0
+      - RATELIMIT_BACKEND=redis
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/health')
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+volumes:
+  redis_data:

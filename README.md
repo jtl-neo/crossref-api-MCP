@@ -127,6 +127,23 @@ leave `/health` open. Requires a domain with DNS pointing at the host and ports
 build) — see the commented block in `Caddyfile`. Multi-replica scaling needs the
 shared rate-limit backend from M9 (see Roadmap).
 
+## Redis cache + cross-replica rate limiting — optional
+
+By default the server caches nothing and rate-limits in a single process. Set
+`REDIS_URL` to enable a response cache (cache-aside on the raw envelope, so
+`raw` and simplified reads share one entry; `mailto`/secrets excluded from keys)
+and, with `RATELIMIT_BACKEND=redis`, a shared token bucket so multiple replicas
+stay within Crossref's polite-pool rate.
+
+```bash
+docker compose -f docker-compose.redis.yml up -d
+curl http://localhost:8000/health   # shows cache_enabled + ratelimit_backend + redis: up
+```
+
+Redis failures degrade gracefully — the server keeps serving (no cache,
+in-memory limiting) and `/health` stays 200 with `redis: down`. For multiple
+replicas, scale behind the Caddy proxy and keep `RATELIMIT_BACKEND=redis`.
+
 ## CI / publishing
 
 `.github/workflows/ci.yml` runs two jobs:

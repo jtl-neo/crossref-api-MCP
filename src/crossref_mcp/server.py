@@ -26,14 +26,31 @@ INSTRUCTIONS = (
 
 mcp = FastMCP("crossref-mcp", instructions=INSTRUCTIONS)
 
-# Module-level client singleton, created lazily and shared across tool calls.
+# Module-level singletons, created lazily and shared across tool calls.
 _client: CrossrefClient | None = None
+_redis = None  # kept for /health ping; None unless REDIS_URL is set
 
 
 def get_client() -> CrossrefClient:
-    global _client
-    if _client is None:
-        _client = CrossrefClient()
+    global _client, _redis
+    if _client is not None:
+        return _client
+
+    settings = get_settings()
+    cache = None
+    limiter = None
+    if settings.redis_url:
+        from crossref_mcp.cache import ResponseCache, create_redis
+
+        _redis = create_redis(settings.redis_url)
+        cache = ResponseCache(_redis, settings.cache_namespace, settings.cache_ttl)
+        if settings.ratelimit_backend.lower() == "redis":
+            from crossref_mcp.ratelimit import RedisTokenBucket
+
+            limiter = RedisTokenBucket(_redis)
+        log.info("Redis enabled: cache on, ratelimit=%s", settings.ratelimit_backend.lower())
+
+    _client = CrossrefClient(settings=settings, cache=cache, limiter=limiter)
     return _client
 
 
@@ -45,8 +62,22 @@ def ping() -> str:
 
 @mcp.custom_route("/health", methods=["GET"])
 async def health(_request: Request) -> JSONResponse:
-    """Liveness probe. Always 200, never requires the API key."""
-    return JSONResponse({"status": "ok", "version": __version__})
+    """Liveness probe. Always 200 (even if Redis is down), never needs the API key."""
+    settings = get_settings()
+    body: dict = {
+        "status": "ok",
+        "version": __version__,
+        "cache_enabled": bool(settings.redis_url),
+        "ratelimit_backend": settings.ratelimit_backend.lower()
+        if settings.redis_url
+        else "in-memory",
+    }
+    if _redis is not None:
+        try:
+            body["redis"] = "up" if await _redis.ping() else "down"
+        except Exception:  # noqa: BLE001 - degraded but still alive
+            body["redis"] = "down"
+    return JSONResponse(body)
 
 
 # Register resource tools.

@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     # header (timing-safe compare); /health is always exempt. Unset = no auth.
     mcp_api_key: str | None = Field(default=None, validation_alias="MCP_API_KEY")
 
+    # --- M9 (optional): Redis cache + cross-replica rate limiting ----------
+    # Unset = no cache and in-memory rate limiting (identical to M4 behavior).
+    redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")
+    cache_ttl: int = Field(default=86400, validation_alias="CACHE_TTL")
+    cache_namespace: str = Field(default="crossref-mcp:v1", validation_alias="CACHE_NAMESPACE")
+    # "in-memory" (default) or "redis". "redis" requires REDIS_URL.
+    ratelimit_backend: str = Field(default="in-memory", validation_alias="RATELIMIT_BACKEND")
+
 
 @lru_cache
 def get_settings() -> Settings:

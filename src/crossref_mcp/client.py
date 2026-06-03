@@ -36,6 +36,7 @@ class CrossrefClient:
         *,
         max_retries: int = 3,
         limiter: RateLimiter | None = None,
+        cache=None,
         backoff_base: float = 0.5,
         backoff_max: float = 8.0,
     ):
@@ -44,6 +45,7 @@ class CrossrefClient:
         self.backoff_base = backoff_base
         self.backoff_max = backoff_max
         self.limiter = limiter or InMemoryTokenBucket()
+        self.cache = cache
         self._client = httpx.AsyncClient(
             base_url=self.settings.crossref_base_url,
             timeout=self.settings.crossref_timeout,
@@ -75,12 +77,23 @@ class CrossrefClient:
         if limit is not None and interval is not None:
             self.limiter.update(limit, interval)
 
-    async def _get(self, path: str, params: dict[str, Any] | None = None) -> dict:
+    async def _get(
+        self, path: str, params: dict[str, Any] | None = None, *, fresh: bool = False
+    ) -> dict:
         """GET a path, always injecting mailto, with token-bucket throttling and
-        exponential backoff retry (honoring Retry-After on 429)."""
+        exponential backoff retry (honoring Retry-After on 429).
+
+        When a cache is configured, served from / stored into it (cache-aside on
+        the raw envelope). `fresh=True` bypasses the read but still refreshes it.
+        """
         query = dict(params or {})
         if self.settings.crossref_mailto:
             query.setdefault("mailto", self.settings.crossref_mailto)
+
+        if self.cache is not None and not fresh:
+            cached = await self.cache.get(path, query)
+            if cached is not None:
+                return cached
 
         last_exc: Exception | None = None
         for attempt in range(self.max_retries + 1):
@@ -97,7 +110,10 @@ class CrossrefClient:
             else:
                 self._update_limiter(resp)
                 if resp.status_code == 200:
-                    return resp.json()
+                    data = resp.json()
+                    if self.cache is not None:
+                        await self.cache.set(path, query, data)
+                    return data
                 if resp.status_code not in _RETRYABLE_STATUS:
                     # 404 / 400 etc — do not retry.
                     raise error_from_response(resp, context=path)

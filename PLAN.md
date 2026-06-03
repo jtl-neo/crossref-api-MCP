@@ -179,7 +179,7 @@ services:
 | 3 | HTTP 認證 | optional API key，env `MCP_API_KEY`，有設才檢查 `X-API-Key` header；`/health` 豁免 |
 | 4 | `/health` 實作 | FastMCP `@mcp.custom_route("/health", methods=["GET"])` 回 200 |
 | 5 | mailto + Plus token | 並存：mailto 永遠送，Plus token 有就再加 header |
-| 6 | Rate-limit 範圍 | 單 process / 單 replica 假設，in-memory token-bucket |
+| 6 | Rate-limit 範圍 | 預設單 process / 單 replica，in-memory token-bucket。**M9 起**：設 `RATELIMIT_BACKEND=redis` + `REDIS_URL` 改用跨副本共享 bucket，多副本才精準 |
 | 7 | 版本號來源 | `importlib.metadata.version()`，單一來源 `pyproject.toml` |
 | 8 | `get_work_references` | 保留獨立 tool，加 `limit` 參數，預設 cap 50 |
 | 9 | Python | `requires-python = ">=3.12"`，runtime image `python:3.12-slim` |
