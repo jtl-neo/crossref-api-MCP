@@ -1,27 +1,40 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg
 *.egg-info/
+.eggs/
 dist/
 build/
 
-# venv
+# Virtual environment (uv)
 .venv/
 venv/
 
-# env / secrets
+# Environment / secrets — the example template stays committed
 .env
-.env.local
+.env.*
+!.env.example
 
-# test / coverage
+# Tests & coverage
 .pytest_cache/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
 
-# tooling caches
+# Tool caches
 .ruff_cache/
 .mypy_cache/
 
-# OS
+# Editor / local agent state
+.vscode/
+.claude/
+
+# Logs
+*.log
+
+# macOS
 .DS_Store
+
+# Note: .python-version is intentionally tracked (pins the Python version).
