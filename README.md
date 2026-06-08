@@ -93,6 +93,28 @@ Or run the container over stdio: `"command": "docker"`, `"args": ["run", "-i",
 **Streamable HTTP** — once the container is up, point an HTTP-capable client at
 `http://localhost:8000/mcp`. If `MCP_API_KEY` is set, send it as `X-API-Key`.
 
+## Use as a skill (no server)
+
+Prefer not to run a server? [`skill.md`](./skill.md) is a self-contained skill
+that teaches an agent to call the Crossref REST API directly — it only needs an
+HTTP/fetch capability (no install, no key, no container). Trade-off: the agent
+issues raw HTTP and parses Crossref JSON itself, without the MCP server's
+polite-pool throttling, field simplification, or structured errors.
+
+**Claude Code (Agent Skill):**
+
+```bash
+mkdir -p ~/.claude/skills/crossref-api
+curl -fsSL https://raw.githubusercontent.com/jtl-neo/crossref-api-MCP/main/skill.md \
+  -o ~/.claude/skills/crossref-api/SKILL.md
+```
+
+(Project-scoped instead: place it at `.claude/skills/crossref-api/SKILL.md` in
+your repo.)
+
+**Other agents (Cursor, Claude Projects, custom):** paste the contents of
+`skill.md` into your system prompt / project knowledge / rules file.
+
 ## Docker / HTTP deployment
 
 ```bash
@@ -257,6 +279,26 @@ JSON。
 
 **Streamable HTTP** — 容器啟動後，將支援 HTTP 的 client 指向
 `http://localhost:8000/mcp`。若設了 `MCP_API_KEY`，以 `X-API-Key` header 帶上。
+
+## 當作 skill 使用（免 server）
+
+不想架 server？[`skill.md`](./skill.md) 是自包含 skill，教 agent **直接呼叫
+Crossref REST API** — 只需 agent 有 HTTP/fetch 能力（免安裝、免 key、免容器）。
+取捨：agent 自己發 raw HTTP、自己解析 Crossref JSON，沒有 MCP server 的
+polite-pool 限速、欄位精簡、結構化錯誤。
+
+**Claude Code（Agent Skill）：**
+
+```bash
+mkdir -p ~/.claude/skills/crossref-api
+curl -fsSL https://raw.githubusercontent.com/jtl-neo/crossref-api-MCP/main/skill.md \
+  -o ~/.claude/skills/crossref-api/SKILL.md
+```
+
+（專案層級：放 repo 內 `.claude/skills/crossref-api/SKILL.md`。）
+
+**其他 agent（Cursor / Claude Projects / 自製）：** 把 `skill.md` 內容貼進
+system prompt / project knowledge / rules 檔。
 
 ## Docker / HTTP 部署
 
